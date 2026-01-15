@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id              Int       @id @default(autoincrement())
+  pinHash         String    @map("pin_hash")
+  credentials     WebAuthnCredential[]
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+model WebAuthnCredential {
+  id              String    @id // credential ID from WebAuthn
+  adminId         Int       @map("admin_id")
+  publicKey       Bytes     @map("public_key")
+  counter         Int       @default(0)
+  deviceName      String?   @map("device_name")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  admin           Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("webauthn_credentials")
+}
+
+model Link {
+  id            Int        @id @default(autoincrement())
+  uuid          String     @unique @default(uuid())
+  title         String
+  imageUrl      String?    @map("image_url")
+  imageData     Bytes?     @map("image_data")
+  imageMimeType String?    @map("image_mime_type")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  locations     Location[]
+
+  @@map("links")
+}
+
+model Location {
+  id        Int      @id @default(autoincrement())
+  linkId    Int      @map("link_id")
+  latitude  Float?
+  longitude Float?
+  accuracy  Float?
+  userAgent String?  @map("user_agent")
+  ipAddress String?  @map("ip_address")
+  timestamp DateTime @default(now())
+  link      Link     @relation(fields: [linkId], references: [id])
+
+  @@map("locations")
+}
